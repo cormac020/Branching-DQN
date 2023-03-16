@@ -62,7 +62,9 @@ else:
     agent = BQN(state_space, action_space, action_scale, learning_rate, device)
 
 memory = ReplayBuffer(100000, action_space, device)
-real_action = np.linspace(-1., 1., action_scale)
+# real_action = np.linspace(-1., 1., action_scale)
+real_actions = [np.linspace(env.action_space.low[i], env.action_space.high[i], action_scale)
+                for i in range(action_space)]
 
 iteration = int(total_round / iter_size)
 score_list = []
@@ -76,11 +78,12 @@ for it in range(iteration):
             while not done:
                 epsilon = max(0.01, 0.9 - 0.01 * (n_epi / 10))
                 if epsilon > random.random():
-                    action = random.sample(range(0, action_scale), 4)
+                    action = random.sample(range(action_scale), action_space)
                 else:
                     action_prob = agent.action(torch.tensor(state).float().reshape(1, -1).to(device))
                     action = [int(x.max(1)[1]) for x in action_prob]
-                next_state, reward, done, _ = env.step(np.array([real_action[x] for x in action]))
+                next_state, reward, done, _ = env.step(np.array([real_actions[i][action[i]] 
+                                                                 for i in range(action_space)]))
                 done_mask = True if reward <= -100 else False
                 score += reward
                 if reward <= -100:
