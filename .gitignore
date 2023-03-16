@@ -1,2 +1,4 @@
 /.idea
 /__pycache__
+/model/*_[0-9]*.pth
+*.json

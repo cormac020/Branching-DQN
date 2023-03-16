@@ -32,7 +32,7 @@ batch_size = args.batch_size
 gamma = args.gamma
 env_name = args.env
 total_round = args.round
-episode = args.print_interval
+iter_size = args.print_interval
 
 if use_tensorboard:
     from torch.utils.tensorboard import SummaryWriter
@@ -41,7 +41,7 @@ if use_tensorboard:
 else:
     writer = None
 
-os.makedirs('./model_weights', exist_ok=True)
+os.makedirs('./model/', exist_ok=True)
 
 # env_name = 'BipedalWalker-v3'
 env = gym.make(env_name)
@@ -51,9 +51,9 @@ env.seed(0)
 torch.manual_seed(0)
 state_space = env.observation_space.shape[0]
 action_space = env.action_space.shape[0]
-print('observation space : ', env.observation_space)
-print('action space : ', env.action_space)
-print(env.action_space.low, env.action_space.high)
+print('observation space:', env.observation_space)
+print('action space:', env.action_space)
+print('action space limits:', env.action_space.low, env.action_space.high)
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 if device == 'cuda':
@@ -64,12 +64,12 @@ else:
 memory = ReplayBuffer(100000, action_space, device)
 real_action = np.linspace(-1., 1., action_scale)
 
-epochs = int(total_round / episode)
+iteration = int(total_round / iter_size)
 score_list = []
 n_epi = 0
-for epoch in range(epochs):
-    with tqdm.tqdm(total=episode, desc='Iteration %d' % epoch) as pbar:
-        for ep in range(episode):
+for it in range(iteration):
+    with tqdm.tqdm(total=iter_size, desc='Iteration %d' % it) as pbar:
+        for ep in range(iter_size):
             state = env.reset()
             done = False
             score = 0.0
@@ -95,8 +95,8 @@ for epoch in range(epochs):
                 writer.add_scalar("reward", score, n_epi)
             n_epi += 1
             if n_epi % args.save_interval == 0:
-                torch.save(agent.state_dict(), './model_weights/agent_' + str(n_epi) + '.pth')
-                # print("episode ", n_epi + 1, ": mean score ", np.mean(score_list[-args.print_interval:]), sep='')
+                torch.save(agent.state_dict(), './model/' + env_name + '_' + str(n_epi) + '.pth')
+                # print("iter_size ", n_epi + 1, ": mean score ", np.mean(score_list[-args.print_interval:]), sep='')
             pbar.set_postfix({
                 'ep':
                     '%d' % n_epi,
@@ -105,9 +105,12 @@ for epoch in range(epochs):
             })
             pbar.update(1)
 
+# torch.save(agent.state_dict(), './model/' + env_name + '_final.pth')
+os.makedirs('./data/', exist_ok=True)
 episodes_list = list(range(len(score_list)))
 plt.plot(episodes_list, score_list)
 plt.xlabel('Episodes')
 plt.ylabel('Rewards')
-plt.title('DQN on {}'.format(env_name))
-plt.show()
+plt.title('BDQN on {}'.format(env_name))
+plt.savefig('./data/' + env_name +'_score.png')
+# plt.show()
