@@ -13,17 +13,16 @@ from agent import BQN
 import gym
 
 parser = argparse.ArgumentParser('parameters')
-parser.add_argument('--train', type=bool, default=True, help="(default: True)")
 parser.add_argument('--round', type=int, default=2000, help='training rounds, (default: 2000)')
-parser.add_argument('--tensorboard', type=bool, default=False, help='use_tensorboard, (default: False)')
-parser.add_argument('--lr_rate', type=float, default=0.0001, help='learning rate (default : 0.0001)')
-parser.add_argument('--batch_size', type=int, default=64, help='batch size(default : 64)')
-parser.add_argument('--gamma', type=float, default=0.99, help='gamma (default : 0.99)')
-parser.add_argument('--action_scale', type=int, default=50, help='action scale between -1 ~ +1')
-parser.add_argument("--env", type=str, default='BipedalWalker-v3', help='Environment')
+parser.add_argument('--tensorboard', type=bool, default=False, help='use tensorboard or not, (default: False)')
+parser.add_argument('--lr_rate', type=float, default=0.0001, help='learning rate (default: 0.0001)')
+parser.add_argument('--batch_size', type=int, default=64, help='batch size (default: 64)')
+parser.add_argument('--gamma', type=float, default=0.99, help='discounting factor (default: 0.99)')
+parser.add_argument('--action_scale', type=int, default=50, help='discrete action scale (default: 50)')
+parser.add_argument('--env', type=str, default='BipedalWalker-v3', help='Environment (default: BipedalWalker-v3)')
 
-parser.add_argument("--save_interval", type=int, default=200, help='save interval(default: 100)')
-parser.add_argument("--print_interval", type=int, default=50, help='print interval(default : 50)')
+parser.add_argument('--save_interval', type=int, default=200, help='interval round to save model (default: 100)')
+parser.add_argument('--print_interval', type=int, default=50, help='interval round to print evaluation (default: 50)')
 args = parser.parse_args()
 
 use_tensorboard = args.tensorboard
@@ -88,7 +87,7 @@ for epoch in range(epochs):
                     reward = -1
                 done_mask = 0 if done_mask is False else 1
                 memory.put((state, action, reward, next_state, done_mask))
-                if (memory.size() > 5000) and args.train:
+                if (memory.size() > 5000):
                     agent.train_mode(n_epi, memory, batch_size, gamma, use_tensorboard, writer)
                 state = next_state
             score_list.append(score)

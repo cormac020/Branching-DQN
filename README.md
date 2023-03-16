@@ -1,39 +1,39 @@
-<left><img height="200" src="D:\Downloads\BipedalWalker-BranchingDQN-master\assets\video.gif" width="250"/></left>
-<left><img height="200" src="D:\Downloads\BipedalWalker-BranchingDQN-master\assets\score.PNG" width="250"/></left>
-# BipedalWalker
-Branching DQN implementation with pytorch in BipedalWalker environment. No PER, No DDQN version to make it easier for you to understand the point. And It is also sufficiently capable of showing (almost) optimal movements after 1000 epochs.
+# Branching DQN
+>Branching DQN implementation with pytorch based on https://github.com/seolhokim/BipedalWalker-BranchingDQN. It is also sufficiently capable of showing (almost) optimal movements after 1000 epochs in BipedalWalker-v3 environment.
 
-## RUN
+## Dependencies
+python==3.9.10  
+gym==0.18.3  
+torch==1.13.1
+  
+## To Train
+use:
 
-~~~
-python main.py
-~~~
-
-  - if you want to change hyper-parameters, you can check "python main.py --help"
-  - you just train and test basic model using main.py
-
-  - '--train', type=bool, default=True, help="(default: True)"
-  - '--render', type=bool, default=False, help="(default: False)"
-  - '--epochs', type=int, default=1000, help='number of epochs, (default: 1000)'
-  - '--tensorboard', type=bool, default=False, help='use_tensorboard, (default: False)'
-  - '--lr_rate', type=float, default=0.0001, help='learning rate (default : 0.0001)'
-  - '--batch_size', type=int, default=64, help='batch size(default : 64)'
-  - '--gamma', type=float, default=0.99, help='gamma (default : 0.99)'
-  - '--action_scale', type=int, default=6, help='action scale between -1 ~ +1'
-  - "--load", type=str, default = 'no', help = 'load network name in ./model_weights'
-  - "--save_interval", type=int, default = 100, help = 'save interval(default: 100)'
-  - "--print_interval", type=int, default = 1, help = 'print interval(default : 1)'
-## Install BipedalWalker
-
-### Ubuntu
-```
-conda install swig # needed to build Box2D in the pip install
-pip install box2d-py # a repackaged version of pybox2d
+```bash
+python train.py
 ```
 
-https://stackoverflow.com/questions/44198228/install-pybox2d-for-python-3-6-with-conda-4-3-21
+- **--round** for training rounds (default: 2000)
+- **--tensorboard** for whether to use tensorboard (default: False)
+- **--lr_rate** for learning rate (default: 0.0001)
+- **--batch_size** for batch size (default: 64)
+- **--gamma** for discounting factor gamma (default: 0.99)
+- **--action_scale** for discrete action scale among the continuous action space (default: 50)
+- **--env** for which environment to train in (default: BipedalWalker-v3)
+- **--save_interval** for interval round to save model(default: 100)
+- **--print_interval** for interval round to print evaluation(default: 50)
 
-### Windows10
 
-https://mclearninglab.tistory.com/136
+## To Test
+use:
+```bash
+python enjoy.py
+```
 
+- **--render** for whether to render (default: True)
+- **--round** for evaluation rounds (default: 10)
+- **--action_scale** for discrete action scale (default: 50)
+- **--load** to specify the model to load in ./model_weights (e.g. 2000 for agent_2000.pth)
+- **--env** for which environment to test in (default: BipedalWalker-v3)
+
+P.S *It is highly recommended to use same **action_scale** and **env** in training and testing. Otherwise the performance in testing could be rather unpredictable.*

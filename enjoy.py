@@ -13,9 +13,9 @@ import gym
 parser = argparse.ArgumentParser('parameters')
 parser.add_argument('--render', type=bool, default=True, help="(default: True)")
 parser.add_argument('--round', type=int, default=10, help='evaluation rounds (default: 10)')
-parser.add_argument('--action_scale', type=int, default=50, help='action scale between -1 ~ +1')
-parser.add_argument("--load", type=str, default='no', help='load network name in ./model_weights')
-parser.add_argument("--env", type=str, default='BipedalWalker-v3', help='Environment')
+parser.add_argument('--action_scale', type=int, default=50, help='discrete action scale (default: 50)')
+parser.add_argument('--load', type=str, default='no', help='load network name in ./model_weights')
+parser.add_argument('--env', type=str, default='BipedalWalker-v3', help='Environment (default: BipedalWalker-v3)')
 
 args = parser.parse_args()
 
