@@ -49,22 +49,22 @@ random.seed(0)
 np.random.seed(0)
 env.seed(0)
 torch.manual_seed(0)
-state_space = env.observation_space.shape[0]
-action_space = env.action_space.shape[0]
+state_dim = env.observation_space.shape[0]
+action_dim = env.action_space.shape[0]
 print('observation space:', env.observation_space)
 print('action space:', env.action_space)
 print('action space limits:', env.action_space.low, env.action_space.high)
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 if device == 'cuda':
-    agent = BQN(state_space, action_space, action_scale, learning_rate, device).cuda()
+    agent = BQN(state_dim, action_dim, action_scale, learning_rate, device).cuda()
 else:
-    agent = BQN(state_space, action_space, action_scale, learning_rate, device)
+    agent = BQN(state_dim, action_dim, action_scale, learning_rate, device)
 
-memory = ReplayBuffer(100000, action_space, device)
+memory = ReplayBuffer(100000, action_dim, device)
 # real_action = np.linspace(-1., 1., action_scale)
 real_actions = [np.linspace(env.action_space.low[i], env.action_space.high[i], action_scale)
-                for i in range(action_space)]
+                for i in range(action_dim)]
 
 iteration = int(total_round / iter_size)
 score_list = []
@@ -78,20 +78,20 @@ for it in range(iteration):
             while not done:
                 epsilon = max(0.01, 0.9 - 0.01 * (n_epi / 10))
                 if epsilon > random.random():
-                    action = random.sample(range(action_scale), action_space)
+                    action = random.sample(range(action_scale), action_dim)
                 else:
-                    action_prob = agent.action(torch.tensor(state).float().reshape(1, -1).to(device))
+                    action_prob = agent.take_action(torch.tensor(state).float().reshape(1, -1).to(device))
                     action = [int(x.max(1)[1]) for x in action_prob]
                 next_state, reward, done, _ = env.step(np.array([real_actions[i][action[i]] 
-                                                                 for i in range(action_space)]))
+                                                                 for i in range(action_dim)]))
                 done_mask = True if reward <= -100 else False
                 score += reward
                 if reward <= -100:
                     reward = -1
                 done_mask = 0 if done_mask is False else 1
                 memory.put((state, action, reward, next_state, done_mask))
-                if (memory.size() > 5000):
-                    agent.train_mode(n_epi, memory, batch_size, gamma, use_tensorboard, writer)
+                if memory.size() > 5000:
+                    agent.update(n_epi, memory, batch_size, gamma, use_tensorboard, writer, action_dim)
                 state = next_state
             score_list.append(score)
             if use_tensorboard:

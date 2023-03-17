@@ -3,22 +3,22 @@ import torch.nn.functional as F
 
 
 class QNetwork(nn.Module):
-    def __init__(self, state_space: int, action_num: int, action_scale: int):
+    def __init__(self, state_dim: int, action_dim: int, action_scale: int):
         super(QNetwork, self).__init__()
-        # 公共的特征提取层
-        self.linear_1 = nn.Linear(state_space, state_space * 20)
-        self.linear_2 = nn.Linear(state_space * 20, state_space * 10)
-        # 在每个分支上评估该分支上每个动作的价值，分支有action_num个，动作有action_scale个
-        self.actions = [nn.Sequential(nn.Linear(state_space * 10, state_space * 5),
+        # shared state feature extraction layer
+        self.linear_1 = nn.Linear(state_dim, state_dim * 20)
+        self.linear_2 = nn.Linear(state_dim * 20, state_dim * 10)
+        # evaluate action advantages on each branch
+        self.actions = [nn.Sequential(nn.Linear(state_dim * 10, state_dim * 5),
                                       nn.ReLU(),
-                                      nn.Linear(state_space * 5, action_scale)
-                                      ) for _ in range(action_num)]
+                                      nn.Linear(state_dim * 5, action_scale)
+                                      ) for _ in range(action_dim)]
         # 使用modulelist将其注册到神经网络中，以便可以更新参数
         self.actions = nn.ModuleList(self.actions)
-        # 额外的计算状态价值的模块
-        self.value = nn.Sequential(nn.Linear(state_space * 10, state_space * 5),
+        # module to calculate state value
+        self.value = nn.Sequential(nn.Linear(state_dim * 10, state_dim * 5),
                                    nn.ReLU(),
-                                   nn.Linear(state_space * 5, 1)
+                                   nn.Linear(state_dim * 5, 1)
                                    )
 
     def forward(self, x):
