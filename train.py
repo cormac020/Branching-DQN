@@ -80,8 +80,8 @@ for it in range(iteration):
                 if epsilon > random.random():
                     action = random.sample(range(action_scale), action_dim)
                 else:
-                    action_prob = agent.take_action(torch.tensor(state).float().reshape(1, -1).to(device))
-                    action = [int(x.max(1)[1]) for x in action_prob]
+                    action_value = agent.take_action(torch.tensor(state).float().reshape(1, -1).to(device))
+                    action = [int(x.max(1)[1]) for x in action_value]
                 next_state, reward, done, _ = env.step(np.array([real_actions[i][action[i]] 
                                                                  for i in range(action_dim)]))
                 done_mask = True if reward <= -100 else False
@@ -115,5 +115,5 @@ plt.plot(episodes_list, score_list)
 plt.xlabel('Episodes')
 plt.ylabel('Rewards')
 plt.title('BDQN on {}'.format(env_name))
-plt.savefig('./data/' + env_name +'_score.png')
+plt.savefig('./data/' + env_name + '_score.png')
 # plt.show()

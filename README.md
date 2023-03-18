@@ -2,7 +2,7 @@
 > Branching DQN implementation with pytorch based on https://github.com/seolhokim/BipedalWalker-BranchingDQN. 
 > It is also sufficiently capable of showing (almost) optimal movements after 1000 episodes in BipedalWalker-v3 environment.
 > For better performance in BipedalWalker-v3, I use some tricks mentioned in https://zhuanlan.zhihu.com/p/409553262.
-> However it seems fine in other environments without these tricks.:)
+> However it seems fine in other environments without these tricks. :)
 
 ## Dependencies
 python==3.9.10  
@@ -45,10 +45,10 @@ python enjoy.py
 - **--load** to specify the model to load in ./model/ (e.g. 2000 for [env]_2000.pth)
 - **--env** for which environment to test in (default: BipedalWalker-v3)
 
-P.S. *It is highly recommended to use same **action_scale** and **env** in training and testing. Otherwise the performance in testing could be rather unpredictable.*
+P.S. *It is highly recommended to use same **action_scale** and **env** in training and testing. Otherwise, the performance in testing could be rather unpredictable.*
 
 ## Performance
 > **Scores in Training:**  
-![Score in 2000 episodes](data/BipedalWalker-v3_score.png)  
+![Score in 2000 episodes](data/score.png)  
 > **Trained Model:**  
 ![Visual performance](data/render.gif)

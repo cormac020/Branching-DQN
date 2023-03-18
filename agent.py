@@ -18,7 +18,7 @@ class BQN(nn.Module):
                                      {'params': self.q.linear_2.parameters(), 'lr': learning_rate / (action_dim + 2)},
                                      {'params': self.q.value.parameters(), 'lr': learning_rate / (action_dim + 2)},
                                      {'params': self.q.actions.parameters(), 'lr': learning_rate}, ])
-        self.update_freq = 50
+        self.update_freq = 1000
         self.update_count = 0
 
     def take_action(self, x):
@@ -33,7 +33,8 @@ class BQN(nn.Module):
         q_values = torch.stack(q_values).transpose(0, 1)
         q_values = q_values.gather(2, actions.long()).squeeze(-1)
 
-        max_next_q_values = self.q(next_state)  # double dqn
+        # max_next_q_values = self.q(next_state)  # double dqn
+        max_next_q_values = self.target_q(next_state)  # normal dqn
         max_next_q_values = torch.stack(max_next_q_values).transpose(0, 1)
         max_next_q_values = max_next_q_values.max(-1, keepdim=True)[0]
         q_target = (done_mask * gamma * max_next_q_values.mean(1) + reward)

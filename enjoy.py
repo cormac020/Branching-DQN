@@ -36,17 +36,17 @@ torch.manual_seed(0)
 os.makedirs('./data/', exist_ok=True)
 # env = wrappers.Monitor(env, directory='./data/', force=True)  
 
-state_space = env.observation_space.shape[0]
-action_space = env.action_space.shape[0]
+state_dim = env.observation_space.shape[0]
+action_dim = env.action_space.shape[0]
 print('observation space:', env.observation_space)
 print('action space:', env.action_space)
 print('action space limits:', env.action_space.low, env.action_space.high)
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 if device == 'cuda':
-    agent = BQN(state_space, action_space, action_scale, 0, device).cuda()
+    agent = BQN(state_dim, action_dim, action_scale, 0, device).cuda()
 else:
-    agent = BQN(state_space, action_space, action_scale, 0, device)
+    agent = BQN(state_dim, action_dim, action_scale, 0, device)
 
 # if specified a model, load it
 model_path = './model/'+ env_name + '_' + args.load + '.pth'
@@ -63,8 +63,8 @@ for n_epi in pbar:
     while not done:
         if args.render:
             env.render()
-        action_prob = agent.action(torch.tensor(state).float().reshape(1, -1).to(device))
-        action = [int(x.max(1)[1]) for x in action_prob]
+        action_value = agent.take_action(torch.tensor(state).float().reshape(1, -1).to(device))
+        action = [int(x.max(1)[1]) for x in action_value]
         next_state, reward, done, _ = env.step(np.array([real_action[x] for x in action]))
         score += reward
         state = next_state
