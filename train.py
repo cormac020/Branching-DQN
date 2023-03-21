@@ -43,6 +43,7 @@ else:
 
 os.makedirs('./model/', exist_ok=True)
 
+gym.logger.set_level(40)
 # env_name = 'BipedalWalker-v3'
 env = gym.make(env_name)
 random.seed(0)
@@ -84,12 +85,15 @@ for it in range(iteration):
                     action = [int(x.max(1)[1]) for x in action_value]
                 next_state, reward, done, _ = env.step(np.array([real_actions[i][action[i]] 
                                                                  for i in range(action_dim)]))
-                done_mask = True if reward <= -100 else False
                 score += reward
+                # tricks
                 if reward <= -100:
                     reward = -1
-                done_mask = 0 if done_mask is False else 1
-                memory.put((state, action, reward, next_state, done_mask))
+                    done_mask = 1
+                else:
+                    done_mask = 0
+
+                memory.add((state, action, reward, next_state, done_mask))
                 if memory.size() > 5000:
                     agent.update(n_epi, memory, batch_size, gamma, use_tensorboard, writer, action_dim)
                 state = next_state

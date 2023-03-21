@@ -10,7 +10,7 @@ class ReplayBuffer:
         self.action_dim = action_dim
         self.device = device
 
-    def put(self, transition):
+    def add(self, transition):
         self.buffer.append(transition)
 
     def sample(self, n):
