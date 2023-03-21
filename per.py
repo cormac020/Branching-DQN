@@ -1,5 +1,6 @@
 import random
 import numpy as np
+import torch
 
 
 # SumTree
@@ -73,9 +74,11 @@ class Memory:  # stored as ( s, a, r, s_ ) in SumTree
     beta = 0.4
     beta_increment_per_sampling = 0.001
 
-    def __init__(self, capacity):
+    def __init__(self, capacity, action_dim, device):
         self.tree = SumTree(capacity)
         self.capacity = capacity
+        self.action_dim = action_dim
+        self.device = device
 
     def _get_priority(self, error):
         return (np.abs(error) + self.e) ** self.a
@@ -91,6 +94,8 @@ class Memory:  # stored as ( s, a, r, s_ ) in SumTree
         priorities = []
 
         self.beta = np.min([1., self.beta + self.beta_increment_per_sampling])
+        state_lst, reward_lst, next_state_lst, done_mask_lst = [], [], [], []
+        actions_lst = [[] for _ in range(self.action_dim)]
 
         for i in range(n):
             a = segment * i
@@ -98,6 +103,14 @@ class Memory:  # stored as ( s, a, r, s_ ) in SumTree
 
             s = random.uniform(a, b)
             (idx, p, data) = self.tree.get(s)
+            state, actions, reward, next_state, done_mask = data
+            state_lst.append(state)
+            for i in range(self.action_dim):
+                actions_lst[i].append(actions[i])
+            reward_lst.append([reward])
+            next_state_lst.append(next_state)
+            done_mask_lst.append([done_mask])
+
             priorities.append(p)
             batch.append(data)
             idxs.append(idx)
@@ -106,7 +119,12 @@ class Memory:  # stored as ( s, a, r, s_ ) in SumTree
         is_weight = np.power(self.tree.n_entries * sampling_probabilities, -self.beta)
         is_weight /= is_weight.max()
 
-        return batch, idxs, is_weight
+        state_lst = torch.tensor(np.array(state_lst), dtype=torch.float).to(self.device)
+        actions_lst = [torch.tensor(x, dtype=torch.float).to(self.device) for x in actions_lst]
+        reward_lst = torch.tensor(np.array(reward_lst), dtype=torch.float).to(self.device)
+        next_state_lst = torch.tensor(np.array(next_state_lst), dtype=torch.float).to(self.device)
+        done_mask_lst = torch.tensor(np.array(done_mask_lst), dtype=torch.float).to(self.device)
+        return idxs, is_weight, state_lst, actions_lst, reward_lst, next_state_lst, done_mask_lst
 
     def update(self, idx, error):
         p = self._get_priority(error)

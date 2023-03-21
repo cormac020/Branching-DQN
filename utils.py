@@ -26,11 +26,15 @@ class ReplayBuffer:
             reward_lst.append([reward])
             next_state_lst.append(next_state)
             done_mask_lst.append([done_mask])
+        
+        state_lst = torch.tensor(np.array(state_lst), dtype=torch.float).to(self.device)
         actions_lst = [torch.tensor(x, dtype=torch.float).to(self.device) for x in actions_lst]
-        return torch.tensor(np.array(state_lst), dtype=torch.float).to(self.device), \
-            actions_lst, torch.tensor(np.array(reward_lst), dtype=torch.float).to(self.device), \
-            torch.tensor(np.array(next_state_lst), dtype=torch.float).to(self.device), \
-            torch.tensor(np.array(done_mask_lst), dtype=torch.float).to(self.device)
+        reward_lst = torch.tensor(np.array(reward_lst), dtype=torch.float).to(self.device)
+        next_state_lst = torch.tensor(np.array(next_state_lst), dtype=torch.float).to(self.device)
+        done_mask_lst = torch.tensor(np.array(done_mask_lst), dtype=torch.float).to(self.device)
+
+        return state_lst, actions_lst, reward_lst, next_state_lst, done_mask_lst
+            
 
     def size(self):
         return len(self.buffer)

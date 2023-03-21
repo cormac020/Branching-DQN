@@ -36,10 +36,10 @@ class BQN(nn.Module):
         # max_next_q_values = self.q(next_state)  # double dqn
         max_next_q_values = self.target_q(next_state)  # normal dqn
         max_next_q_values = torch.stack(max_next_q_values).transpose(0, 1)
-        max_next_q_values = max_next_q_values.max(-1, keepdim=True)[0]
-        q_target = (done_mask * gamma * max_next_q_values.mean(1) + reward)
+        max_next_q_values = max_next_q_values.max(-1, keepdim=True)[0].squeeze(-1)
+        q_target = (done_mask * gamma * max_next_q_values + reward)
 
-        loss = F.mse_loss(q_values, q_target.repeat(1, action_dim))
+        loss = F.mse_loss(q_values, q_target)
 
         self.optimizer.zero_grad()
         loss.backward()
