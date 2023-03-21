@@ -8,6 +8,7 @@ import tqdm
 import matplotlib.pyplot as plt
 
 from utils import ReplayBuffer
+from per import PER
 from agent import BQN
 
 import gym
@@ -20,6 +21,7 @@ parser.add_argument('--batch_size', type=int, default=64, help='batch size (defa
 parser.add_argument('--gamma', type=float, default=0.99, help='discounting factor (default: 0.99)')
 parser.add_argument('--action_scale', type=int, default=50, help='discrete action scale (default: 50)')
 parser.add_argument('--env', type=str, default='BipedalWalker-v3', help='Environment (default: BipedalWalker-v3)')
+parser.add_argument('--per', type=bool, default=True, help='whether to use per (default: True)')
 
 parser.add_argument('--save_interval', type=int, default=200, help='interval round to save model (default: 100)')
 parser.add_argument('--print_interval', type=int, default=50, help='interval round to print evaluation (default: 50)')
@@ -33,6 +35,7 @@ gamma = args.gamma
 env_name = args.env
 total_round = args.round
 iter_size = args.print_interval
+prioritized = args.per
 
 if use_tensorboard:
     from torch.utils.tensorboard import SummaryWriter
@@ -62,7 +65,7 @@ if device == 'cuda':
 else:
     agent = BQN(state_dim, action_dim, action_scale, learning_rate, device)
 
-memory = ReplayBuffer(100000, action_dim, device)
+memory = PER(100000, action_dim, device) if prioritized else ReplayBuffer(100000, action_dim, device)
 # real_action = np.linspace(-1., 1., action_scale)
 real_actions = [np.linspace(env.action_space.low[i], env.action_space.high[i], action_scale)
                 for i in range(action_dim)]
@@ -93,7 +96,7 @@ for it in range(iteration):
                 else:
                     done_mask = 0
 
-                memory.add((state, action, reward, next_state, done_mask))
+                agent.append_sample(memory, state, action, reward, next_state, done_mask, prioritized, gamma)
                 if memory.size() > 5000:
                     agent.update(n_epi, memory, batch_size, gamma, use_tensorboard, writer, action_dim)
                 state = next_state

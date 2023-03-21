@@ -23,9 +23,33 @@ class BQN(nn.Module):
 
     def take_action(self, x):
         return self.q(x)
+    
+    def append_sample(self, memory, state, action, reward, next_state, done_mask, prioritized, gamma):
+        if prioritized:
+            t_action = torch.tensor(action, dtype=torch.float).unsqueeze(0).unsqueeze(-1)
+            done_mask = abs(done_mask - 1)
 
-    def update(self, n_epi, memory, batch_size, gamma, use_tensorboard, writer, action_dim):
-        state, actions, reward, next_state, done_mask = memory.sample(batch_size)
+            q_values = self.q(torch.tensor(state, dtype=torch.float))
+            q_values = torch.stack(q_values).transpose(0, 1)
+            cur_val = q_values.gather(2, t_action.long()).squeeze(0).squeeze(-1)
+
+            # max_next_q_values = self.q(next_state)  # double dqn
+            max_next_q_values = self.target_q(torch.tensor(next_state, dtype=torch.float))  # normal dqn
+            max_next_q_values = torch.stack(max_next_q_values).transpose(0, 1)
+            max_next_q_values = max_next_q_values.max(-1, keepdim=True)[0].squeeze(0).squeeze(-1)
+
+            target_val = reward + done_mask * gamma * max_next_q_values
+
+            error = (abs(cur_val - target_val)).mean().detach().numpy()
+            memory.add(error, (state, action, reward, next_state, done_mask))
+        else:
+            memory.add((state, action, reward, next_state, done_mask))
+
+    def update(self, n_epi, memory, batch_size, gamma, use_tensorboard, writer, prioritized):
+        if prioritized:
+            idxs, is_weights, state, actions, reward, next_state, done_mask = memory.sample(batch_size)
+        else:
+            state, actions, reward, next_state, done_mask = memory.sample(batch_size)
         actions = torch.stack(actions).transpose(0, 1).unsqueeze(-1)
         done_mask = torch.abs(done_mask - 1)
 
@@ -39,10 +63,20 @@ class BQN(nn.Module):
         max_next_q_values = max_next_q_values.max(-1, keepdim=True)[0].squeeze(-1)
         q_target = (done_mask * gamma * max_next_q_values + reward)
 
-        loss = F.mse_loss(q_values, q_target)
+        if prioritized:
+            errors = (abs(q_values - q_target)).mean(1).detach().numpy()
+            # update priority
+            for i in range(batch_size):
+                idx = idxs[i]
+                memory.update(idx, errors[i])
+
+            # MSE Loss function
+            loss = (torch.FloatTensor(is_weights) * F.mse_loss(q_values, q_target))
+        else:
+            loss = F.mse_loss(q_values, q_target)
 
         self.optimizer.zero_grad()
-        loss.backward()
+        loss.backward(torch.ones_like(loss))
         self.optimizer.step()
 
         self.update_count += 1

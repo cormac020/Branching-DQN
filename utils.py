@@ -34,7 +34,6 @@ class ReplayBuffer:
         done_mask_lst = torch.tensor(np.array(done_mask_lst), dtype=torch.float).to(self.device)
 
         return state_lst, actions_lst, reward_lst, next_state_lst, done_mask_lst
-            
 
     def size(self):
         return len(self.buffer)

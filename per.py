@@ -68,7 +68,7 @@ class SumTree:
         return (idx, self.tree[idx], self.data[dataIdx])
 
 
-class Memory:  # stored as ( s, a, r, s_ ) in SumTree
+class PER:  # stored as ( s, a, r, s_ ) in SumTree
     e = 0.01
     a = 0.6
     beta = 0.4
