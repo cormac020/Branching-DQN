@@ -12,11 +12,11 @@ import gym
 # from gym import wrappers, logger
 
 parser = argparse.ArgumentParser('parameters')
-parser.add_argument('--render', type=bool, default=True, help="(default: True)")
-parser.add_argument('--round', type=int, default=10, help='evaluation rounds (default: 10)')
-parser.add_argument('--action_scale', type=int, default=50, help='discrete action scale (default: 50)')
-parser.add_argument('--load', type=str, default='final', help='load network name in ./model/')
-parser.add_argument('--env', type=str, default='BipedalWalker-v3', help='Environment (default: BipedalWalker-v3)')
+parser.add_argument('--not_render', '-n', action='store_false', help="not render during the evaluation")
+parser.add_argument('--round', '-r', type=int, default=10, help='evaluation rounds (default: 10)')
+parser.add_argument('--action_scale', '-a', type=int, default=50, help='discrete action scale (default: 50)')
+parser.add_argument('--load', '-l', type=str, default='final', help='load network name in ./model/')
+parser.add_argument('--env', '-e', type=str, default='BipedalWalker-v3', help='Environment (default: BipedalWalker-v3)')
 
 args = parser.parse_args()
 
@@ -26,6 +26,7 @@ eva_round = args.round
 
 # env_name = 'BipedalWalker-v3'
 # set seed to make evaluation repeatable
+gym.logger.set_level(40)
 env = gym.make(env_name)
 random.seed(0)
 np.random.seed(0)
@@ -49,7 +50,7 @@ else:
     agent = BQN(state_dim, action_dim, action_scale, 0, device)
 
 # if specified a model, load it
-model_path = './model/'+ env_name + '_' + args.load + '.pth'
+model_path = './model/' + env_name + '_' + args.load + '.pth'
 if os.path.isfile(model_path):
     agent.load_state_dict(torch.load(model_path))
 real_action = np.linspace(-1., 1., action_scale)
@@ -61,7 +62,7 @@ for n_epi in pbar:
     done = False
     score = 0.0
     while not done:
-        if args.render:
+        if not args.not_render:
             env.render()
         action_value = agent.take_action(torch.tensor(state).float().reshape(1, -1).to(device))
         action = [int(x.max(1)[1]) for x in action_value]

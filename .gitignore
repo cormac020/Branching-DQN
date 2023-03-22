@@ -3,3 +3,4 @@
 /model/*_[0-9]*.pth
 *.json
 /.history
+/data/*_score.png

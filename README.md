@@ -22,15 +22,17 @@ use:
 python train.py
 ```
 
-- **--round** for training rounds (default: 2000)
-- **--tensorboard** for whether to use tensorboard (default: False)
-- **--lr_rate** for learning rate (default: 0.0001)
-- **--batch_size** for batch size (default: 64)
-- **--gamma** for discounting factor gamma (default: 0.99)
-- **--action_scale** for discrete action scale among the continuous action space (default: 50)
-- **--env** for which environment to train in (default: BipedalWalker-v3)
-- **--save_interval** for interval round to save model(default: 100)
-- **--print_interval** for interval round to print evaluation(default: 50)
+- **--round | -r :** training rounds (default: 2000)
+- **--tensorboard | -t :** use tensorboard  
+- **--lr_rate | -l :** learning rate (default: 0.0001)
+- **--batch_size | -b :** batch size (default: 64)
+- **--gamma | -g :** discounting factor gamma (default: 0.99)
+- **--action_scale | -a :** discrete action scale among the continuous action space (default: 50)
+- **--env | -e :** environment to train in (default: BipedalWalker-v3)
+- **--per | -p :** use per  
+- **--load | -l :** to specify the model to load in ./model/ (e.g. 2000 for [env]_2000.pth)  
+- **--save_interval | -s :** interval round to save model(default: 100)
+- **--print_interval | -d :** interval round to print evaluation(default: 50)
 
 
 ## Test
@@ -39,11 +41,11 @@ use:
 python enjoy.py
 ```
 
-- **--render** for whether to render (default: True)
-- **--round** for evaluation rounds (default: 10)
-- **--action_scale** for discrete action scale (default: 50)
-- **--load** to specify the model to load in ./model/ (e.g. 2000 for [env]_2000.pth)
-- **--env** for which environment to test in (default: BipedalWalker-v3)
+- **--not_render | -n :** not to render
+- **--round | -r :** for evaluation rounds (default: 10)
+- **--action_scale | -a :** for discrete action scale (default: 50)
+- **--load | -l :** to specify the model to load in ./model/ (e.g. 2000 for [env]_2000.pth)
+- **--env | -e :** for which environment to test in (default: BipedalWalker-v3)
 
 P.S. *It is highly recommended to use same **action_scale** and **env** in training and testing. Otherwise, the performance in testing could be rather unpredictable.*
 
