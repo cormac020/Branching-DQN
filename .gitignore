@@ -1,6 +1,7 @@
 /.idea
 /__pycache__
 /model/*_[0-9]*.pth
+!/model/BipedalWalker-v3_25.pth
 *.json
 /.history
 /data/*_score.png
