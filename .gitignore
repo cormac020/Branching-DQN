@@ -4,3 +4,5 @@
 *.json
 /.history
 /data/*_score.png
+/data/*_[0-9]*_*
+/data_bk

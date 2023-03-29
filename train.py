@@ -7,6 +7,7 @@ import argparse
 import tqdm
 import matplotlib.pyplot as plt
 import pandas as pd
+import time
 
 from utils import ReplayBuffer
 from per import PER
@@ -20,12 +21,12 @@ parser.add_argument('--tensorboard', '-t', action='store_true', help='use tensor
 parser.add_argument('--lr_rate', '-lr', type=float, default=0.0001, help='learning rate (default: 0.0001)')
 parser.add_argument('--batch_size', '-b', type=int, default=64, help='batch size (default: 64)')
 parser.add_argument('--gamma', '-g', type=float, default=0.99, help='discounting factor (default: 0.99)')
-parser.add_argument('--action_scale', '-a', type=int, default=50, help='discrete action scale (default: 50)')
+parser.add_argument('--action_scale', '-a', type=int, default=25, help='discrete action scale (default: 25)')
 parser.add_argument('--env', '-e', type=str, default='BipedalWalker-v3', help='Environment (default: BipedalWalker-v3)')
 parser.add_argument('--per', '-p', action='store_true', help='use per')
-parser.add_argument('--load', '-l', type=str, default='final', help='load network name in ./model/')
+parser.add_argument('--load', '-l', type=str, default='no', help='load network name in ./model/')
 
-parser.add_argument('--save_interval', '-s', type=int, default=200, help='interval to save model (default: 100)')
+parser.add_argument('--save_interval', '-s', type=int, default=1000, help='interval to save model (default: 1000)')
 parser.add_argument('--print_interval', '-d', type=int, default=50, help='interval to print evaluation (default: 50)')
 args = parser.parse_args()
 
@@ -77,8 +78,9 @@ real_actions = [np.linspace(env.action_space.low[i], env.action_space.high[i], a
                 for i in range(action_dim)]
 
 iteration = int(total_round / iter_size)
-score_list = []
+score_list, time_list = [], []
 n_epi = 0
+start = time.time()
 for it in range(iteration):
     with tqdm.tqdm(total=iter_size, desc='Iteration %d' % it) as pbar:
         for ep in range(iter_size):
@@ -97,22 +99,24 @@ for it in range(iteration):
                 score += reward
                 done_mask = 1 if done else 0
                 # tricks
-                # if reward <= -100:
-                #     reward = -1
-                #     done_mask = 1
-                # else:
-                #     done_mask = 0
+                if reward <= -100:
+                    reward = -1
+                    done_mask = 1
+                else:
+                    done_mask = 0
 
                 agent.append_sample(memory, state, action, reward, next_state, done_mask, prioritized, gamma)
                 if memory.size() > 5000:
                     agent.update(n_epi, memory, batch_size, gamma, use_tensorboard, writer, prioritized)
                 state = next_state
             score_list.append(score)
+            time_list.append(time.time() - start)
+
             if use_tensorboard:
                 writer.add_scalar("reward", score, n_epi)
             n_epi += 1
             if n_epi % args.save_interval == 0:
-                torch.save(agent.state_dict(), './model/' + env_name + '_' + str(n_epi) + '.pth')
+                torch.save(agent.state_dict(), './model/' + env_name + '_' + str(action_scale) + '.pth')
                 # print("iter_size ", n_epi + 1, ": mean score ", np.mean(score_list[-args.print_interval:]), sep='')
             pbar.set_postfix({
                 'ep':
@@ -122,17 +126,17 @@ for it in range(iteration):
             })
             pbar.update(1)
 
-torch.save(agent.state_dict(), './model/' + env_name + '_final.pth')
+torch.save(agent.state_dict(), './model/' + env_name + '_' + str(action_scale) + '.pth')
 os.makedirs('./data/', exist_ok=True)
 episodes_list = list(range(len(score_list)))
 plt.plot(episodes_list, score_list)
 plt.xlabel('Episodes')
 plt.ylabel('Rewards')
 plt.title('BDQN on {}'.format(env_name))
-plt.savefig('./data/' + env_name + '_score.png')
+plt.savefig('./data/' + env_name + '_' + str(action_scale) + '_score.png')
 # plt.show()
 
 # 字典中的key值即为csv中列名
-dataframe = pd.DataFrame({env_name: score_list})
+dataframe = pd.DataFrame({env_name: score_list, 'time': time_list})
 # 将DataFrame存储为csv,index表示是否显示行名，default=True
-dataframe.to_csv('./data/' + env_name + "_reward.csv", index=False, sep=',')
+dataframe.to_csv('./data/' + env_name + '_' + str(action_scale) + "_reward.csv", index=False, sep=',')

@@ -6,19 +6,19 @@ class QNetwork(nn.Module):
     def __init__(self, state_dim: int, action_dim: int, action_scale: int):
         super(QNetwork, self).__init__()
         # shared state feature extraction layer
-        self.linear_1 = nn.Linear(state_dim, state_dim * 20)
-        self.linear_2 = nn.Linear(state_dim * 20, state_dim * 10)
+        self.linear_1 = nn.Linear(state_dim, 512)
+        self.linear_2 = nn.Linear(512, 256)
         # evaluate action advantages on each branch
-        self.actions = [nn.Sequential(nn.Linear(state_dim * 10, state_dim * 5),
+        self.actions = [nn.Sequential(nn.Linear(256, 128),
                                       nn.ReLU(),
-                                      nn.Linear(state_dim * 5, action_scale)
+                                      nn.Linear(128, action_scale)
                                       ) for _ in range(action_dim)]
         # 使用modulelist将其注册到神经网络中，以便可以更新参数
         self.actions = nn.ModuleList(self.actions)
         # module to calculate state value
-        self.value = nn.Sequential(nn.Linear(state_dim * 10, state_dim * 5),
+        self.value = nn.Sequential(nn.Linear(256, 128),
                                    nn.ReLU(),
-                                   nn.Linear(state_dim * 5, 1)
+                                   nn.Linear(128, 1)
                                    )
 
     def forward(self, x):

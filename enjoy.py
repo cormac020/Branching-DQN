@@ -5,17 +5,17 @@ import os
 import random
 import argparse
 import tqdm
+import pandas as pd
 
 from agent import BQN
 
 import gym
-# from gym import wrappers, logger
 
 parser = argparse.ArgumentParser('parameters')
-parser.add_argument('--not_render', '-n', action='store_false', help="not render during the evaluation")
-parser.add_argument('--round', '-r', type=int, default=10, help='evaluation rounds (default: 10)')
-parser.add_argument('--action_scale', '-a', type=int, default=50, help='discrete action scale (default: 50)')
-parser.add_argument('--load', '-l', type=str, default='final', help='load network name in ./model/')
+parser.add_argument('--not_render', '-n', action='store_true', help="not render during the evaluation")
+parser.add_argument('--round', '-r', type=int, default=100, help='evaluation rounds (default: 100)')
+parser.add_argument('--action_scale', '-a', type=int, default=25, help='discrete action scale, \
+                    specifying network to load in ./model/ (default: 25)')
 parser.add_argument('--env', '-e', type=str, default='BipedalWalker-v3', help='Environment (default: BipedalWalker-v3)')
 
 args = parser.parse_args()
@@ -33,9 +33,10 @@ np.random.seed(0)
 env.seed(0)
 torch.manual_seed(0)
 
-# logger.setLevel(logger.ERROR)
-os.makedirs('./data/', exist_ok=True)
-# env = wrappers.Monitor(env, directory='./data/', force=True)  
+# record a video clip of render
+# gym.logger.setLevel(gym.logger.ERROR)
+# os.makedirs('./data/', exist_ok=True)
+# env = gym.wrappers.Monitor(env, directory='./data/', force=True)  
 
 state_dim = env.observation_space.shape[0]
 action_dim = env.action_space.shape[0]
@@ -50,7 +51,7 @@ else:
     agent = BQN(state_dim, action_dim, action_scale, 0, device)
 
 # if specified a model, load it
-model_path = './model/' + env_name + '_' + args.load + '.pth'
+model_path = './model/' + env_name + '_' + str(action_scale) + '.pth'
 if os.path.isfile(model_path):
     agent.load_state_dict(torch.load(model_path))
 real_action = np.linspace(-1., 1., action_scale)
@@ -79,3 +80,6 @@ for n_epi in pbar:
     })
 
 print('Mean award in %d evaluation: %f' % (eva_round, np.mean(score_list)))
+dataframe = pd.DataFrame({env_name: score_list})
+# 将DataFrame存储为csv,index表示是否显示行名，default=True
+dataframe.to_csv('./data/' + env_name + '_' + str(action_scale) + "_evaluation.csv", index=False, sep=',')

@@ -27,11 +27,11 @@ python train.py
 - **--lr_rate | -l :** learning rate (default: 0.0001)
 - **--batch_size | -b :** batch size (default: 64)
 - **--gamma | -g :** discounting factor gamma (default: 0.99)
-- **--action_scale | -a :** discrete action scale among the continuous action space (default: 50)
+- **--action_scale | -a :** discrete action scale among the continuous action space (default: 25)
 - **--env | -e :** environment to train in (default: BipedalWalker-v3)
 - **--per | -p :** use per  
-- **--load | -l :** to specify the model to load in ./model/ (e.g. 2000 for [env]_2000.pth)  
-- **--save_interval | -s :** interval round to save model(default: 100)
+- **--load | -l :** to specify the model to load in ./model/ (e.g. 25 for [env]_25.pth)  
+- **--save_interval | -s :** interval round to save model(default: 1000)
 - **--print_interval | -d :** interval round to print evaluation(default: 50)
 
 
@@ -42,12 +42,9 @@ python enjoy.py
 ```
 
 - **--not_render | -n :** not to render
-- **--round | -r :** for evaluation rounds (default: 10)
-- **--action_scale | -a :** for discrete action scale (default: 50)
-- **--load | -l :** to specify the model to load in ./model/ (e.g. 2000 for [env]_2000.pth)
-- **--env | -e :** for which environment to test in (default: BipedalWalker-v3)
-
-P.S. *It is highly recommended to use same **action_scale** and **env** in training and testing. Otherwise, the performance in testing could be rather unpredictable.*
+- **--round | -r :** evaluation rounds (default: 10)
+- **--action_scale | -a :** discrete action scale, specifying network to load in ./model/ (default: 25)  
+- **--env | -e :** environment to test in (default: BipedalWalker-v3)
 
 ## Performance
 > **Scores in Training:**  
