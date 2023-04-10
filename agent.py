@@ -6,9 +6,9 @@ import torch.optim as optim
 from network import QNetwork
 
 
-class BQN(nn.Module):
+class BDQ(nn.Module):
     def __init__(self, state_dim: int, action_dim: int, action_scale: int, learning_rate, device: str):
-        super(BQN, self).__init__()
+        super(BDQ, self).__init__()
 
         self.q = QNetwork(state_dim, action_dim, action_scale).to(device)
         self.target_q = QNetwork(state_dim, action_dim, action_scale).to(device)
@@ -45,7 +45,7 @@ class BQN(nn.Module):
         else:
             memory.add((state, action, reward, next_state, done_mask))
 
-    def update(self, n_epi, memory, batch_size, gamma, use_tensorboard, writer, prioritized):
+    def update(self, memory, batch_size, gamma, prioritized):
         if prioritized:
             idxs, is_weights, state, actions, reward, next_state, done_mask = memory.sample(batch_size)
         else:
@@ -84,6 +84,4 @@ class BQN(nn.Module):
             self.update_count = 0
             self.target_q.load_state_dict(self.q.state_dict())
 
-        if use_tensorboard:
-            writer.add_scalar("Loss/loss", loss, n_epi)
         return loss

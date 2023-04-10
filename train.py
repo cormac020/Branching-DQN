@@ -11,13 +11,12 @@ import time
 
 from utils import ReplayBuffer
 from per import PER
-from agent import BQN
+from agent import BDQ
 
 import gym
 
 parser = argparse.ArgumentParser('parameters')
 parser.add_argument('--round', '-r', type=int, default=2000, help='training rounds (default: 2000)')
-parser.add_argument('--tensorboard', '-t', action='store_true', help='use tensorboard')
 parser.add_argument('--lr_rate', '-lr', type=float, default=0.0001, help='learning rate (default: 0.0001)')
 parser.add_argument('--batch_size', '-b', type=int, default=64, help='batch size (default: 64)')
 parser.add_argument('--gamma', '-g', type=float, default=0.99, help='discounting factor (default: 0.99)')
@@ -31,7 +30,6 @@ parser.add_argument('--save_interval', '-s', type=int, default=1000, help='inter
 parser.add_argument('--print_interval', '-d', type=int, default=50, help='interval to print evaluation (default: 50)')
 args = parser.parse_args()
 
-use_tensorboard = args.tensorboard
 action_scale = args.action_scale
 learning_rate = args.lr_rate
 batch_size = args.batch_size
@@ -40,13 +38,6 @@ env_name = args.env
 total_round = args.round
 iter_size = args.print_interval
 prioritized = args.per
-
-if use_tensorboard:
-	from torch.utils.tensorboard import SummaryWriter
-
-	writer = SummaryWriter()
-else:
-	writer = None
 
 os.makedirs('./model/', exist_ok=True)
 
@@ -65,9 +56,9 @@ print('action space limits:', env.action_space.low, env.action_space.high)
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 if device == 'cuda':
-	agent = BQN(state_dim, action_dim, action_scale, learning_rate, device).cuda()
+	agent = BDQ(state_dim, action_dim, action_scale, learning_rate, device).cuda()
 else:
-	agent = BQN(state_dim, action_dim, action_scale, learning_rate, device)
+	agent = BDQ(state_dim, action_dim, action_scale, learning_rate, device)
 # if specified a model, load it
 model_path = './model/' + env_name + '_' + args.load + '.pth'
 if os.path.isfile(model_path):
@@ -109,13 +100,11 @@ for it in range(iteration):
 
 				agent.append_sample(memory, state, action, reward, next_state, done_mask, prioritized, gamma)
 				if memory.size() > 5000:
-					agent.update(n_epi, memory, batch_size, gamma, use_tensorboard, writer, prioritized)
+					agent.update(memory, batch_size, gamma, prioritized)
 				state = next_state
 			score_list.append(score)
 			time_list.append(time.time() - start)
 
-			if use_tensorboard:
-				writer.add_scalar("reward", score, n_epi)
 			n_epi += 1
 			if n_epi % args.save_interval == 0:
 				torch.save(agent.state_dict(), './model/' + env_name + '_' + str(action_scale) + '.pth')
@@ -134,7 +123,7 @@ episodes_list = list(range(len(score_list)))
 plt.plot(episodes_list, score_list)
 plt.xlabel('Episodes')
 plt.ylabel('Rewards')
-plt.title('BDQN on {}'.format(env_name))
+plt.title('DRDQN on {}'.format(env_name))
 plt.savefig('./data/' + env_name + '_' + str(action_scale) + '_score.png')
 # plt.show()
 

@@ -7,7 +7,7 @@ import argparse
 import tqdm
 import pandas as pd
 
-from agent import BQN
+from agent import BDQ
 
 import gym
 
@@ -46,9 +46,9 @@ print('action space limits:', env.action_space.low, env.action_space.high)
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 if device == 'cuda':
-    agent = BQN(state_dim, action_dim, action_scale, 0, device).cuda()
+    agent = BDQ(state_dim, action_dim, action_scale, 0, device).cuda()
 else:
-    agent = BQN(state_dim, action_dim, action_scale, 0, device)
+    agent = BDQ(state_dim, action_dim, action_scale, 0, device)
 
 # if specified a model, load it
 model_path = './model/' + env_name + '_' + str(action_scale) + '.pth'
