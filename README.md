@@ -23,7 +23,6 @@ python train.py
 ```
 
 - **--round | -r :** training rounds (default: 2000)
-- **--tensorboard | -t :** use tensorboard  
 - **--lr_rate | -l :** learning rate (default: 0.0001)
 - **--batch_size | -b :** batch size (default: 64)
 - **--gamma | -g :** discounting factor gamma (default: 0.99)
