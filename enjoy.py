@@ -12,7 +12,7 @@ from agent import BDQ
 import gym
 
 parser = argparse.ArgumentParser('parameters')
-parser.add_argument('--not_render', '-n', action='store_true', help="not render during the evaluation")
+parser.add_argument('--not_render', '-n', action='store_true', help='not render during the evaluation')
 parser.add_argument('--round', '-r', type=int, default=100, help='evaluation rounds (default: 100)')
 parser.add_argument('--action_scale', '-a', type=int, default=25, help='discrete action scale, \
                     specifying network to load in ./model/ (default: 25)')
@@ -82,4 +82,4 @@ for n_epi in pbar:
 print('Mean award in %d evaluation: %f' % (eva_round, np.mean(score_list)))
 dataframe = pd.DataFrame({env_name: score_list})
 # 将DataFrame存储为csv,index表示是否显示行名，default=True
-dataframe.to_csv('./data/' + env_name + '_' + str(action_scale) + "_evaluation.csv", index=False, sep=',')
+dataframe.to_csv('./data/' + env_name + '_' + str(action_scale) + '_evaluation.csv', index=False, sep=',')

@@ -69,7 +69,7 @@ real_actions = [np.linspace(env.action_space.low[i], env.action_space.high[i], a
 				for i in range(action_dim)]
 
 iteration = int(total_round / iter_size)
-score_list, time_list = [], []
+reward_list, time_list = [], []
 n_epi = 0
 start = time.time()
 for it in range(iteration):
@@ -101,32 +101,31 @@ for it in range(iteration):
 				if memory.size() > 5000:
 					agent.update(memory, batch_size, gamma, prioritized)
 				state = next_state
-			score_list.append(score)
+			reward_list.append(score)
 			time_list.append(time.time() - start)
 
 			n_epi += 1
 			if n_epi % args.save_interval == 0:
 				torch.save(agent.state_dict(), './model/' + env_name + '_' + str(action_scale) + '.pth')
-				# print("iter_size ", n_epi + 1, ": mean score ", np.mean(score_list[-args.print_interval:]), sep='')
+				# print('iter_size ', n_epi + 1, ': mean score ', np.mean(reward_list[-args.print_interval:]), sep='')
 			pbar.set_postfix({
 				'ep':
 					'%d' % n_epi,
 				'sc':
-					'%.3f' % np.mean(score_list[-(ep + 1):])
+					'%.3f' % np.mean(reward_list[-(ep + 1):])
 			})
 			pbar.update(1)
 
 torch.save(agent.state_dict(), './model/' + env_name + '_' + str(action_scale) + '.pth')
 os.makedirs('./data/', exist_ok=True)
-episodes_list = list(range(len(score_list)))
-plt.plot(episodes_list, score_list)
+episodes_list = list(range(len(reward_list)))
+plt.plot(episodes_list, reward_list)
 plt.xlabel('Episodes')
 plt.ylabel('Rewards')
 plt.title('DRDQN on {}'.format(env_name))
 plt.savefig('./data/' + env_name + '_' + str(action_scale) + '_score.png')
 # plt.show()
 
-# 字典中的key值即为csv中列名
-dataframe = pd.DataFrame({env_name: score_list, 'time': time_list})
-# 将DataFrame存储为csv,index表示是否显示行名，default=True
-dataframe.to_csv('./data/' + env_name + '_' + str(action_scale) + "_reward.csv", index=False, sep=',')
+# save training data as csv file
+dataframe = pd.DataFrame({env_name: reward_list, 'time': time_list})
+dataframe.to_csv('./data/' + env_name + '_' + str(action_scale) + '_reward.csv', index=False, sep=',')
