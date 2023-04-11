@@ -9,8 +9,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import time
 
-from utils import ReplayBuffer
-from per import PER
+from utils import ReplayBuffer, PER
 from agent import BDQ
 
 import gym
