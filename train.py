@@ -77,7 +77,6 @@ iteration = int(total_round / iter_size)
 reward_list, time_list = [], []  # record rewards in each episode, record time cost
 n_epi = 0  # current episode count
 start = time.time()  # starting time
-dataframe = pd.DataFrame({env_name: reward_list, 'time': time_list})  # save training data as csv file
 
 # train begins
 for it in range(iteration):
@@ -120,6 +119,8 @@ for it in range(iteration):
 			n_epi += 1
 			if n_epi % args.save_interval == 0:  # time to save model and data
 				torch.save(agent.state_dict(), './model/' + env_name + '_' + str(action_scale) + '.pth')
+				# save training data as csv file
+				dataframe = pd.DataFrame({env_name: reward_list, 'time': time_list})
 				dataframe.to_csv('./data/' + env_name + '_' + str(action_scale) + '_reward.csv', index=False, sep=',')
 			# update the progress bar
 			pbar.set_postfix({
@@ -131,6 +132,7 @@ for it in range(iteration):
 			pbar.update(1)
 
 torch.save(agent.state_dict(), './model/' + env_name + '_' + str(action_scale) + '.pth')
+dataframe = pd.DataFrame({env_name: reward_list, 'time': time_list})
 dataframe.to_csv('./data/' + env_name + '_' + str(action_scale) + '_reward.csv', index=False, sep=',')
 
 # episodes_list = list(range(len(reward_list)))
