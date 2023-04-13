@@ -17,17 +17,16 @@ parser.add_argument('--round', '-r', type=int, default=100, help='evaluation rou
 parser.add_argument('--action_scale', '-a', type=int, default=25, help='discrete action scale, \
                     specifying network to load in ./model/ (default: 25)')
 parser.add_argument('--env', '-e', type=str, default='BipedalWalker-v3', help='Environment (default: BipedalWalker-v3)')
-
 args = parser.parse_args()
+print(args)
 
 action_scale = args.action_scale
 env_name = args.env
 eva_round = args.round
 
-# env_name = 'BipedalWalker-v3'
-# set seed to make evaluation repeatable
 gym.logger.set_level(40)
 env = gym.make(env_name)
+# set seed to make evaluation repeatable
 random.seed(0)
 np.random.seed(0)
 env.seed(0)
@@ -81,5 +80,4 @@ for n_epi in pbar:
 
 print('Mean award in %d evaluation: %f' % (eva_round, np.mean(score_list)))
 dataframe = pd.DataFrame({env_name: score_list})
-# 将DataFrame存储为csv,index表示是否显示行名，default=True
 dataframe.to_csv('./data/' + env_name + '_' + str(action_scale) + '_evaluation.csv', index=False, sep=',')

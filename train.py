@@ -28,6 +28,7 @@ parser.add_argument('--no_trick', '-nt', action='store_true', help='not to use t
 parser.add_argument('--save_interval', '-s', type=int, default=1000, help='interval to save model (default: 1000)')
 parser.add_argument('--print_interval', '-d', type=int, default=50, help='interval to print evaluation (default: 50)')
 args = parser.parse_args()
+print(args)
 
 action_scale = args.action_scale
 learning_rate = args.lr_rate
@@ -38,11 +39,12 @@ total_round = args.round
 iter_size = args.print_interval
 prioritized = args.per
 
-os.makedirs('./model/', exist_ok=True)
+os.makedirs('./model/', exist_ok=True)  # save model
+os.makedirs('./data/', exist_ok=True)  # save rewards and time
 
-# env_name = 'BipedalWalker-v3'
-gym.logger.set_level(40)
+gym.logger.set_level(40)  # surpress a warning from gym
 env = gym.make(env_name)
+# set seed to make train repeatable
 random.seed(0)
 np.random.seed(0)
 env.seed(0)
@@ -51,35 +53,41 @@ state_dim = env.observation_space.shape[0]
 action_dim = env.action_space.shape[0]
 print('observation space:', env.observation_space)
 print('action space:', env.action_space)
-print('action space limits:', env.action_space.low, env.action_space.high)
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 if device == 'cuda':
 	agent = BDQ(state_dim, action_dim, action_scale, learning_rate, device).cuda()
 else:
 	agent = BDQ(state_dim, action_dim, action_scale, learning_rate, device)
+
 # if specified a model, load it
 model_path = './model/' + env_name + '_' + args.load + '.pth'
-if os.path.isfile(model_path):
+if os.path.isfile(model_path):  # model exists
 	agent.load_state_dict(torch.load(model_path))
 
+# use normal replay buffer or per
 memory = PER(100000, action_dim, device) if prioritized else ReplayBuffer(100000, action_dim, device)
-# real_action = np.linspace(-1., 1., action_scale)
+# divide continuous action space into discrete actions, according to ACTION_SCALE
 real_actions = [np.linspace(env.action_space.low[i], env.action_space.high[i], action_scale)
 				for i in range(action_dim)]
 
+# divide TOTAL_ROUND into ITERATION iterations
+# it's easier to see the progress over iterations
 iteration = int(total_round / iter_size)
-reward_list, time_list = [], []
-n_epi = 0
-start = time.time()
+reward_list, time_list = [], []  # record rewards in each episode, record time cost
+n_epi = 0  # current episode count
+start = time.time()  # starting time
+dataframe = pd.DataFrame({env_name: reward_list, 'time': time_list})  # save training data as csv file
+
+# train begins
 for it in range(iteration):
 	with tqdm.tqdm(total=iter_size, desc='Iteration %d' % it) as pbar:
 		for ep in range(iter_size):
 			state = env.reset()
 			done = False
-			score = 0.0
+			score = 0  # accumulated reward in an episode
 			while not done:
-				epsilon = max(0.01, 0.9 - 0.01 * (n_epi / 10))
+				epsilon = max(0.01, 0.9 - 0.01 * (n_epi / 10))  # epsilon greedy
 				if epsilon > random.random():
 					action = random.sample(range(action_scale), action_dim)
 				else:
@@ -90,24 +98,30 @@ for it in range(iteration):
 				score += reward
 				done_mask = 1 if done else 0
 				
+				# For env like BipedalWalker, it's necessary to distinguish DEAD from MAX_STEP_DONE.
+				# It happens that the Walker reaches MAX_STEP and the env shuts down
+				# which largely discredits action that the Walker takes this step.
+				# Thus we only consider DEAD as DONE. The MAX_STEP_DONE is seen as a normal step. 
 				if not args.no_trick:
 					if reward <= -100:
 						reward = -1
 						done_mask = 1
 					else:
 						done_mask = 0
-
+				# start to update the agent if there are enough samples
 				agent.append_sample(memory, state, action, reward, next_state, done_mask, prioritized, gamma)
 				if memory.size() > 5000:
 					agent.update(memory, batch_size, gamma, prioritized)
 				state = next_state
+			# record data in this episode
 			reward_list.append(score)
 			time_list.append(time.time() - start)
 
 			n_epi += 1
-			if n_epi % args.save_interval == 0:
+			if n_epi % args.save_interval == 0:  # time to save model and data
 				torch.save(agent.state_dict(), './model/' + env_name + '_' + str(action_scale) + '.pth')
-				# print('iter_size ', n_epi + 1, ': mean score ', np.mean(reward_list[-args.print_interval:]), sep='')
+				dataframe.to_csv('./data/' + env_name + '_' + str(action_scale) + '_reward.csv', index=False, sep=',')
+			# update the progress bar
 			pbar.set_postfix({
 				'ep':
 					'%d' % n_epi,
@@ -117,15 +131,12 @@ for it in range(iteration):
 			pbar.update(1)
 
 torch.save(agent.state_dict(), './model/' + env_name + '_' + str(action_scale) + '.pth')
-os.makedirs('./data/', exist_ok=True)
-episodes_list = list(range(len(reward_list)))
-plt.plot(episodes_list, reward_list)
-plt.xlabel('Episodes')
-plt.ylabel('Rewards')
-plt.title('DRDQN on {}'.format(env_name))
-plt.savefig('./data/' + env_name + '_' + str(action_scale) + '_score.png')
-# plt.show()
-
-# save training data as csv file
-dataframe = pd.DataFrame({env_name: reward_list, 'time': time_list})
 dataframe.to_csv('./data/' + env_name + '_' + str(action_scale) + '_reward.csv', index=False, sep=',')
+
+# episodes_list = list(range(len(reward_list)))
+# plt.plot(episodes_list, reward_list)
+# plt.xlabel('Episodes')
+# plt.ylabel('Rewards')
+# plt.title('DRDQN on {}'.format(env_name))
+# plt.savefig('./data/' + env_name + '_' + str(action_scale) + '_score.png')
+# plt.show()

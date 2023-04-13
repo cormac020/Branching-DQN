@@ -15,7 +15,6 @@ class QNetwork(nn.Module):
                                       nn.ReLU(),
                                       nn.Linear(128, action_scale)
                                       ) for _ in range(action_dim)]
-        # 使用modulelist将其注册到神经网络中，以便可以更新参数
         self.actions = nn.ModuleList(self.actions)
         # module to calculate state value
         self.value = nn.Sequential(nn.Linear(256, 128),
@@ -81,9 +80,9 @@ class BDQ(nn.Module):
         actions = torch.stack(actions).transpose(0, 1).unsqueeze(-1)
         done_mask = torch.abs(done_mask - 1)
 
-        q_values = self.q(state)
-        q_values = torch.stack(q_values).transpose(0, 1)
-        q_values = q_values.gather(2, actions.long()).squeeze(-1)
+        q_values = self.q(state)  # q_values for all possible actions
+        q_values = torch.stack(q_values).transpose(0, 1)  # prepare for selection
+        q_values = q_values.gather(2, actions.long()).squeeze(-1)  # get q_values for current action
 
         # max_next_q_values = self.q(next_state)  # double dqn
         max_next_q_values = self.target_q(next_state)  # normal dqn
