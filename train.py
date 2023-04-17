@@ -88,7 +88,10 @@ for it in range(iteration):
 			while not done:
 				epsilon = max(0.01, 0.9 - 0.01 * (n_epi / 10))  # epsilon greedy
 				if epsilon > random.random():
-					action = random.sample(range(action_scale), action_dim)
+					action = np.random.choice(range(action_scale), size=action_dim, replace=True)
+					# the following method doesn't allow same action taken on different dimensions
+					# and it doesn't make sense
+					# action = random.sample(range(action_scale), action_dim) 
 				else:
 					action_value = agent.take_action(torch.tensor(state).float().reshape(1, -1).to(device))
 					action = [int(x.max(1)[1]) for x in action_value]
