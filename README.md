@@ -32,7 +32,7 @@ python train.py
 - **--load | -l :** to specify the model to load in ./model/ (e.g. 25 for [env]_25.pth)  
 - **--no_trick | -nt :** not to use tricks  
 - **--save_interval | -s :** interval round to save model(default: 1000)
-- **--print_interval | -d :** interval round to print evaluation(default: 50)
+- **--print_interval | -d :** interval round to print evaluation(default: 200)
 
 
 ## Test

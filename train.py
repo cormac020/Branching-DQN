@@ -26,7 +26,7 @@ parser.add_argument('--load', '-l', type=str, default='no', help='load network n
 parser.add_argument('--no_trick', '-nt', action='store_true', help='not to use tricks')
 
 parser.add_argument('--save_interval', '-s', type=int, default=1000, help='interval to save model (default: 1000)')
-parser.add_argument('--print_interval', '-d', type=int, default=50, help='interval to print evaluation (default: 50)')
+parser.add_argument('--print_interval', '-d', type=int, default=200, help='interval to print evaluation (default: 200)')
 args = parser.parse_args()
 print(args)
 
@@ -80,19 +80,21 @@ start = time.time()  # starting time
 dataframe = pd.DataFrame({env_name: reward_list, 'time': time_list})  # save training data as csv file
 
 # train begins
+epsilon = 1.0
 for it in range(iteration):
 	with tqdm.tqdm(total=iter_size, desc='Iteration %d' % it) as pbar:
 		for ep in range(iter_size):
 			state = env.reset()
 			done = False
 			score = 0  # accumulated reward in an episode
+			epsilon = max(0.001, 0.99 * epsilon)
 			while not done:
-				epsilon = max(0.01, 0.9 - 0.01 * (n_epi / 10))  # epsilon greedy
+				  # epsilon greedy
 				if epsilon > random.random():
-					action = np.random.choice(range(action_scale), size=action_dim, replace=True)
+					# action = np.random.choice(range(action_scale), size=action_dim, replace=True)
 					# the following method doesn't allow same action taken on different dimensions
 					# and it doesn't make sense
-					# action = random.sample(range(action_scale), action_dim) 
+					action = random.sample(range(action_scale), action_dim) 
 				else:
 					action_value = agent.take_action(torch.tensor(state).float().reshape(1, -1).to(device))
 					action = [int(x.max(1)[1]) for x in action_value]
@@ -113,7 +115,7 @@ for it in range(iteration):
 						done_mask = 0
 				# start to update the agent if there are enough samples
 				agent.append_sample(memory, state, action, reward, next_state, done_mask, prioritized, gamma)
-				if memory.size() > 5000:
+				if memory.size() > 3000:
 					agent.update(memory, batch_size, gamma, prioritized)
 				state = next_state
 			# record data in this episode
@@ -126,20 +128,20 @@ for it in range(iteration):
 				dataframe.to_csv('./data/' + env_name + '_' + str(action_scale) + '_reward.csv', index=False, sep=',')
 			# update the progress bar
 			pbar.set_postfix({
-				'ep':
+				'episode':
 					'%d' % n_epi,
-				'sc':
-					'%.3f' % np.mean(reward_list[-(ep + 1):])
+				'avg_reward':
+					'%.1f' % np.mean(reward_list[-(ep + 1):])
 			})
 			pbar.update(1)
 
 torch.save(agent.state_dict(), './model/' + env_name + '_' + str(action_scale) + '.pth')
 dataframe.to_csv('./data/' + env_name + '_' + str(action_scale) + '_reward.csv', index=False, sep=',')
 
-# episodes_list = list(range(len(reward_list)))
-# plt.plot(episodes_list, reward_list)
-# plt.xlabel('Episodes')
-# plt.ylabel('Rewards')
-# plt.title('DRDQN on {}'.format(env_name))
-# plt.savefig('./data/' + env_name + '_' + str(action_scale) + '_score.png')
+episodes_list = list(range(len(reward_list)))
+plt.plot(episodes_list, reward_list)
+plt.xlabel('Episodes')
+plt.ylabel('Rewards')
+plt.title('BDQ on {}'.format(env_name))
+plt.savefig('./data/' + env_name + '_' + str(action_scale) + '_score.png')
 # plt.show()

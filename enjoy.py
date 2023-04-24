@@ -72,12 +72,12 @@ for n_epi in pbar:
     score_list.append(score)
     n_epi += 1
     pbar.set_postfix({
-        'ep':
+        'round':
             '%d' % n_epi,
-        'sc':
-            '%.3f' % np.mean(score_list[-(n_epi + 1):])
+        'avg_reward':
+            '%.1f' % np.mean(score_list[-(n_epi + 1):])
     })
 
-print('Mean award in %d evaluation: %f' % (eva_round, np.mean(score_list)))
+print('Mean award in %d evaluations: %f' % (eva_round, np.mean(score_list)))
 dataframe = pd.DataFrame({env_name: score_list})
 dataframe.to_csv('./data/' + env_name + '_' + str(action_scale) + '_evaluation.csv', index=False, sep=',')

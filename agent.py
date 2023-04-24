@@ -8,18 +8,18 @@ class QNetwork(nn.Module):
     def __init__(self, state_dim: int, action_dim: int, action_scale: int):
         super(QNetwork, self).__init__()
         # shared state feature extraction layer
-        self.linear_1 = nn.Linear(state_dim, 512)
-        self.linear_2 = nn.Linear(512, 256)
+        self.linear_1 = nn.Linear(state_dim, 256)
+        self.linear_2 = nn.Linear(256, 128)
         # evaluate action advantages on each branch
-        self.actions = [nn.Sequential(nn.Linear(256, 128),
+        self.actions = [nn.Sequential(nn.Linear(128, 64),
                                       nn.ReLU(),
-                                      nn.Linear(128, action_scale)
+                                      nn.Linear(64, action_scale)
                                       ) for _ in range(action_dim)]
         self.actions = nn.ModuleList(self.actions)
         # module to calculate state value
-        self.value = nn.Sequential(nn.Linear(256, 128),
+        self.value = nn.Sequential(nn.Linear(128, 64),
                                    nn.ReLU(),
-                                   nn.Linear(128, 1)
+                                   nn.Linear(64, 1)
                                    )
 
     def forward(self, x):
@@ -41,9 +41,9 @@ class BDQ(nn.Module):
         self.target_q = QNetwork(state_dim, action_dim, action_scale).to(device)
         self.target_q.load_state_dict(self.q.state_dict())
 
-        self.optimizer = optim.Adam([{'params': self.q.linear_1.parameters(), 'lr': learning_rate / (action_dim + 2)},
-                                     {'params': self.q.linear_2.parameters(), 'lr': learning_rate / (action_dim + 2)},
-                                     {'params': self.q.value.parameters(), 'lr': learning_rate / (action_dim + 2)},
+        self.optimizer = optim.Adam([{'params': self.q.linear_1.parameters(), 'lr': learning_rate / action_dim},
+                                     {'params': self.q.linear_2.parameters(), 'lr': learning_rate / action_dim},
+                                     {'params': self.q.value.parameters(), 'lr': learning_rate / action_dim},
                                      {'params': self.q.actions.parameters(), 'lr': learning_rate}, ])
         self.update_freq = 1000
         self.update_count = 0
