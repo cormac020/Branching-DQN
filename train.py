@@ -77,7 +77,6 @@ iteration = int(total_round / iter_size)
 reward_list, time_list = [], []  # record rewards in each episode, record time cost
 n_epi = 0  # current episode count
 start = time.time()  # starting time
-dataframe = pd.DataFrame({env_name: reward_list, 'time': time_list})  # save training data as csv file
 
 # train begins
 epsilon = 1.0
@@ -91,10 +90,10 @@ for it in range(iteration):
 			while not done:
 				  # epsilon greedy
 				if epsilon > random.random():
-					# action = np.random.choice(range(action_scale), size=action_dim, replace=True)
+					action = np.random.choice(range(action_scale), size=action_dim, replace=True)
 					# the following method doesn't allow same action taken on different dimensions
 					# and it doesn't make sense
-					action = random.sample(range(action_scale), action_dim) 
+					# action = random.sample(range(action_scale), action_dim) 
 				else:
 					action_value = agent.take_action(torch.tensor(state).float().reshape(1, -1).to(device))
 					action = [int(x.max(1)[1]) for x in action_value]
@@ -125,6 +124,7 @@ for it in range(iteration):
 			n_epi += 1
 			if n_epi % args.save_interval == 0:  # time to save model and data
 				torch.save(agent.state_dict(), './model/' + env_name + '_' + str(action_scale) + '.pth')
+				dataframe = pd.DataFrame({env_name: reward_list, 'time': time_list})  # save training data as csv file
 				dataframe.to_csv('./data/' + env_name + '_' + str(action_scale) + '_reward.csv', index=False, sep=',')
 			# update the progress bar
 			pbar.set_postfix({
@@ -136,7 +136,9 @@ for it in range(iteration):
 			pbar.update(1)
 
 torch.save(agent.state_dict(), './model/' + env_name + '_' + str(action_scale) + '.pth')
-dataframe.to_csv('./data/' + env_name + '_' + str(action_scale) + '_reward.csv', index=False, sep=',')
+pd.DataFrame({env_name: reward_list, 'time': time_list}).to_csv(
+'./data/' + env_name + '_' + str(action_scale) + '_reward.csv', index=False, sep=','
+)  # save training data as csv file
 
 episodes_list = list(range(len(reward_list)))
 plt.plot(episodes_list, reward_list)
