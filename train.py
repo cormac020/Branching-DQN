@@ -64,6 +64,8 @@ else:
 model_path = './model/' + env_name + '_' + args.load + '.pth'
 if os.path.isfile(model_path):  # model exists
 	agent.load_state_dict(torch.load(model_path))
+model_path = './model/' + env_name + '_' + str(action_scale) + '.pth'
+data_path = './data/' + env_name + '_' + str(action_scale)
 
 # use normal replay buffer or per
 memory = PER(100000, action_dim, device) if prioritized else ReplayBuffer(100000, action_dim, device)
@@ -123,9 +125,9 @@ for it in range(iteration):
 
 			n_epi += 1
 			if n_epi % args.save_interval == 0:  # time to save model and data
-				torch.save(agent.state_dict(), './model/' + env_name + '_' + str(action_scale) + '.pth')
+				torch.save(agent.state_dict(), model_path)
 				dataframe = pd.DataFrame({env_name: reward_list, 'time': time_list})  # save training data as csv file
-				dataframe.to_csv('./data/' + env_name + '_' + str(action_scale) + '_reward.csv', index=False, sep=',')
+				dataframe.to_csv(data_path + '_reward.csv', index=False, sep=',')
 			# update the progress bar
 			pbar.set_postfix({
 				'episode':
@@ -135,15 +137,14 @@ for it in range(iteration):
 			})
 			pbar.update(1)
 
-torch.save(agent.state_dict(), './model/' + env_name + '_' + str(action_scale) + '.pth')
-pd.DataFrame({env_name: reward_list, 'time': time_list}).to_csv(
-'./data/' + env_name + '_' + str(action_scale) + '_reward.csv', index=False, sep=','
-)  # save training data as csv file
+torch.save(agent.state_dict(), model_path)
+dataframe = pd.DataFrame({env_name: reward_list, 'time': time_list})  # save training data as csv file
+dataframe.to_csv(data_path + '_reward.csv', index=False, sep=',')
 
 episodes_list = list(range(len(reward_list)))
 plt.plot(episodes_list, reward_list)
 plt.xlabel('Episodes')
 plt.ylabel('Rewards')
 plt.title('BDQ on {}'.format(env_name))
-plt.savefig('./data/' + env_name + '_' + str(action_scale) + '_score.png')
+plt.savefig(data_path + '_score.png')
 # plt.show()
